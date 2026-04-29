@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  secretKey String
+  name      String?
+  avatarUrl String?
+  language  String   @default("es")
+  travelMode Boolean @default(false)
+  recoveryCode String?
+  smtpHost      String?
+  smtpPort      Int?
+  smtpUser      String?
+  smtpPass      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  devices   Device[]
+}
+
+model Device {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  ip          String
+  location    String
+  os          String
+  lastAccess  DateTime @default(now())
+  icon        String   @default("Globe")
+  isCurrent   Boolean  @default(false)
+}
+
+model Vault {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String?
+  safeForTravel Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     PasswordItem[]
+}
+
+model PasswordItem {
+  id        String   @id @default(cuid())
+  title     String
+  username  String?
+  password  String?
+  url       String?
+  otpSecret String?
+  notes     String?
+  category     String   @default("login")
+  vaultId      String
+  vault        Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  customFields String?
+  passkey      String?
+  isArchived   Boolean  @default(false)
+  isFavorite   Boolean  @default(false)
+  tags         Tag[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sharedLinks  SharedLink[]
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  items     PasswordItem[]
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  status    String   @default("Activo")
+  role      String   @default("Miembro")
+  initial   String
+  color     String
+  createdAt DateTime @default(now())
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  status    String   @default("Pendiente")
+  sentAt    DateTime @default(now())
+  expiresAt DateTime
+}
+
+model SharedLink {
+  id          String   @id @default(cuid())
+  itemId      String
+  item        PasswordItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  viewOnce    Boolean  @default(false)
+  viewsCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
