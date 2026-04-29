@@ -22,6 +22,50 @@ With OpenPassword you can store passwords, secure notes, credit cards, identitie
 
 ---
 
+## 📸 Screenshots
+
+### Item Detail View
+> View your credentials at a glance. Username, password, passkey status, live TOTP code with countdown, and website — all in one clean panel. Use the **Copy** button to grab any field instantly, or toggle password visibility with the eye icon.
+
+![Item Detail](docs/assets/view_element.png)
+
+---
+
+### Add / Edit Item
+> The item editor opens as a modal overlay. Fill in the title, username, and password — or launch the built-in **Password Generator** to create a strong random password (length, numbers, and symbols all configurable). A passkey indicator confirms biometric keys saved to the item.
+
+![Add Element](docs/assets/add_element.png)
+
+---
+
+### Watchtower — Security Monitor
+> Watchtower scores your entire vault from 0 to 1000. Six metric cards show you reused passwords, weak passwords, available passkeys, active 2FA (TOTP), unsecured HTTP sites, and stale passwords older than 6 months. Click **"Show items"** on any card to filter directly to the affected items.
+
+![Watchtower](docs/assets/watchtower.png)
+
+---
+
+### Analytics Panel
+> Scroll down in Watchtower to reach the Analytics Panel: a GitHub-style **save activity heatmap**, a breakdown of your **most-used domains**, **most-used email accounts**, and a vault summary by item type (logins, cards, identities, secure notes).
+
+![Analytics](docs/assets/analitics.png)
+
+---
+
+### PassEncrypt — Developer Encryption Tool
+> A standalone developer utility for generating cryptographic hashes and encodings. Select an algorithm (bcrypt, SHA-256, SHA-512, MD5, Base64, AES), paste your input, and the result appears instantly. Includes a one-click **Copy Hash** button.
+
+![PassEncrypt](docs/assets/passencrypt.png)
+
+---
+
+### Settings
+> The settings panel gives you full control over your account: edit your profile photo and display name, change your email or master password, reveal or regenerate your Secret Key (with QR code), download your **Emergency Kit** PDF, configure account recovery, set up Travel Mode, auto-lock timeout, SMTP for invitations, and manage linked devices.
+
+![Settings](docs/assets/settings.png)
+
+---
+
 ## ✨ Key Features
 
 ### 🔐 Item Management
@@ -136,6 +180,11 @@ OpenPassword/
 │   └── types/                  # Shared TypeScript types
 ├── prisma/
 │   └── schema.prisma           # Database schema
+├── docs/                       # Extended documentation
+│   ├── architecture.md         # In-depth architecture guide
+│   ├── api-reference.md        # Full API reference
+│   ├── features.md             # Feature deep-dives
+│   └── assets/                 # Screenshots
 └── dev.db                      # Local SQLite database (development)
 ```
 
@@ -178,6 +227,8 @@ All endpoints require authentication via the `auth_token` cookie.
 | `GET` | `/api/invitations` | List invitations |
 | `POST` | `/api/invitations` | Send an invitation |
 | `GET` | `/api/team` | List team members |
+
+> 📖 **Full API Reference** → [docs/api-reference.md](docs/api-reference.md)
 
 ---
 
@@ -269,6 +320,16 @@ http://your-domain.com/item/[item-id]
 ```
 
 As you navigate between items, the browser URL updates automatically. You can bookmark or share these URLs for direct access to any credential.
+
+---
+
+## 📚 Extended Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Guide](docs/architecture.md) | Component structure, data flow, routing |
+| [API Reference](docs/api-reference.md) | Full endpoint documentation with payloads |
+| [Feature Guide](docs/features.md) | Deep-dive into every feature |
 
 ---
 
