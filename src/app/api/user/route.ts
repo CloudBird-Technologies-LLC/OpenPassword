@@ -1,38 +1,16 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '../../../lib/prisma';
+import * as bcrypt from 'bcryptjs';
+import { getAuthUser } from '../../../lib/auth';
 
-const prisma = new PrismaClient();
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    let users = await prisma.user.findMany({ 
-      take: 1,
-      include: { devices: true }
-    });
-    
-    if (!users.length) {
-      // Seed a default user
-      await prisma.user.create({
-        data: {
-          email: 'demilexor@gmail.com',
-          password: 'hashed_password', // Mock hash
-          secretKey: 'A3-GS8TKU-EOV2EF-XD1ZBG-EQNQW6-HBXOWW-C65XPB',
-          travelMode: false
-        }
-      });
-      users = await prisma.user.findMany({ 
-        take: 1,
-        include: { devices: true }
-      });
-    }
-    const user = users[0];
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
-    // Extract real data from request
     const userAgent = request.headers.get('user-agent') || '';
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     
-    // Simple User-Agent parsing
     let browserName = 'Navegador desconocido';
     if (userAgent.includes('Firefox')) browserName = 'Firefox';
     else if (userAgent.includes('Edg')) browserName = 'Edge';
@@ -49,13 +27,11 @@ export async function GET(request: Request) {
     let icon = 'Globe';
     if (osName === 'iOS' || osName === 'Android') icon = 'Smartphone';
 
-    // Update existing devices to not be current
     await prisma.device.updateMany({
       where: { userId: user.id, isCurrent: true },
       data: { isCurrent: false }
     });
 
-    // Check if device from this IP and Browser already exists
     const existingDevice = await prisma.device.findFirst({
       where: { userId: user.id, ip, name: browserName }
     });
@@ -71,7 +47,7 @@ export async function GET(request: Request) {
           userId: user.id,
           name: browserName,
           ip: ip,
-          location: 'Desconocida (Local)', // Needs IP geolocation API for real location, using placeholder
+          location: 'Desconocida (Local)',
           os: osName,
           icon: icon,
           isCurrent: true
@@ -79,42 +55,42 @@ export async function GET(request: Request) {
       });
     }
 
-    // Refetch updated devices
-    const updatedUser = await prisma.user.findUnique({ where: { id: user.id }, include: { devices: { orderBy: { lastAccess: 'desc' } } } });
-    if (updatedUser) user.devices = updatedUser.devices;
+    const finalUser = await prisma.user.findUnique({ 
+      where: { id: user.id }, 
+      include: { devices: { orderBy: { lastAccess: 'desc' } } } 
+    });
+    
+    if (!finalUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     return NextResponse.json({
       data: {
-        id: user.id,
-        email: user.email,
-        secretKey: user.secretKey,
-        travelMode: user.travelMode,
-        language: user.language,
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-        recoveryCode: user.recoveryCode,
-        smtpHost: user.smtpHost,
-        smtpPort: user.smtpPort,
-        smtpUser: user.smtpUser,
-        smtpPass: user.smtpPass,
-        devices: user.devices
+        id: finalUser.id,
+        email: finalUser.email,
+        secretKey: finalUser.secretKey,
+        travelMode: finalUser.travelMode,
+        language: finalUser.language,
+        name: finalUser.name,
+        avatarUrl: finalUser.avatarUrl,
+        recoveryCode: finalUser.recoveryCode,
+        smtpHost: finalUser.smtpHost,
+        smtpPort: finalUser.smtpPort,
+        smtpUser: finalUser.smtpUser,
+        smtpPass: finalUser.smtpPass,
+        devices: finalUser.devices
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('API USER GET ERROR:', error);
-    return NextResponse.json({ error: 'Failed to fetch user', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const data = await request.json();
-    const users = await prisma.user.findMany({ take: 1 });
-    if (!users.length) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-    const user = users[0];
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
+    const data = await request.json();
     const updateData: any = {};
     if (data.travelMode !== undefined) updateData.travelMode = data.travelMode;
     if (data.language !== undefined) updateData.language = data.language;

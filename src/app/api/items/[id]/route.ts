@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-import type { NextRequest } from 'next/server';
+import { getAuthUser } from '../../../../lib/auth';
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
     const { id } = await params;
 
     await prisma.passwordItem.delete({
@@ -19,6 +22,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
     const { id } = await params;
     const body = await request.json();
 

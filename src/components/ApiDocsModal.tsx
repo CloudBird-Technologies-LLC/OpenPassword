@@ -7,11 +7,11 @@ interface ApiDocsProps {
 
 const endpoints = [
   {
-    path: '/api/auth/login',
-    method: 'POST',
-    description: 'Autentica a un usuario y genera la sesión.',
-    payload: '{ "email": "user@example.com", "password": "...", "secretKey": "..." }',
-    response: '{ "success": true, "token": "jwt..." }'
+    path: 'Autenticación',
+    method: 'HEADER',
+    description: 'Todas las peticiones a la API deben incluir una API Key en el header Authorization o usar la sesión de navegador.',
+    payload: 'Authorization: Bearer op_...',
+    response: 'Acceso concedido si la clave es válida'
   },
   {
     path: '/api/items',

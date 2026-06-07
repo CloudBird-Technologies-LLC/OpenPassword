@@ -1,0 +1,10 @@
+.git
+.gitignore
+.next
+node_modules
+docs
+dev.db
+prisma/dev.db
+.env*
+npm-debug.log*
+README.md

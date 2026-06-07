@@ -3,19 +3,31 @@ import prisma from '../../../lib/prisma';
 
 export async function GET() {
   try {
-    let members = await prisma.teamMember.findMany();
+    let members = await prisma.teamMember.findMany({
+      include: {
+        vaults: {
+          include: { vault: true }
+        }
+      }
+    });
     
     // Seed if empty
     if (members.length === 0) {
-      await prisma.teamMember.createMany({
-        data: [
+      await prisma.$transaction(
+        [
           { name: 'CloudBird Technologies', email: 'soporte@cloudbird.com.mx', status: 'Activo', initial: 'C', color: '#3b82f6' },
           { name: 'DemiLexor', email: 'demilexor@gmail.com', status: 'Activo', initial: 'D', color: '#374151' },
           { name: 'Homolfis', email: 'leandro.palacio@cloudbird.com.mx', status: 'Activo', initial: 'H', color: '#d946ef' },
           { name: 'The Creative Vault', email: 'thecreativevaultcommunity@gmail.com', status: 'Activo', initial: 'T', color: '#0ea5e9' },
-        ]
+        ].map((data) => prisma.teamMember.create({ data }))
+      );
+      members = await prisma.teamMember.findMany({
+        include: {
+          vaults: {
+            include: { vault: true }
+          }
+        }
       });
-      members = await prisma.teamMember.findMany();
     }
     
     return NextResponse.json({ data: members });

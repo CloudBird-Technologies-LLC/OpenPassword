@@ -10,7 +10,7 @@ export interface Vault extends Omit<PrismaVault, 'createdAt' | 'updatedAt'> {
   updatedAt: string;
 }
 
-export interface PasswordItem extends Omit<PrismaPasswordItem, 'createdAt' | 'updatedAt'> {
+export interface PasswordItem extends Omit<PrismaPasswordItem, 'createdAt' | 'updatedAt' | 'customFields' | 'passkey'> {
   customFields?: string | null;
   passkey?: string | null;
   isArchived: boolean;

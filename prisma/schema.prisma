@@ -24,6 +24,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   devices   Device[]
+  apiKeys   ApiKey[]
 }
 
 model Device {
@@ -47,6 +48,7 @@ model Vault {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   items     PasswordItem[]
+  members   VaultMember[]
 }
 
 model PasswordItem {
@@ -86,6 +88,24 @@ model TeamMember {
   initial   String
   color     String
   createdAt DateTime @default(now())
+  vaults    VaultMember[]
+}
+
+model VaultMember {
+  id            String     @id @default(cuid())
+  vaultId       String
+  vault         Vault      @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  teamMemberId  String
+  teamMember    TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  canView       Boolean    @default(true)
+  canCopy       Boolean    @default(true)
+  canCreate     Boolean    @default(false)
+  canEdit       Boolean    @default(false)
+  canDelete     Boolean    @default(false)
+  extensionOnly Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+
+  @@unique([vaultId, teamMemberId])
 }
 
 model Invitation {
@@ -104,4 +124,17 @@ model SharedLink {
   viewOnce    Boolean  @default(false)
   viewsCount  Int      @default(0)
   createdAt   DateTime @default(now())
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  keyHash     String    @unique
+  prefix      String
+  scopes      String    @default("read")
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
 }

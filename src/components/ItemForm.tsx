@@ -128,6 +128,7 @@ export default function ItemForm({ onClose, onSuccess, vaultId, initialData }: I
         finalOtp = customOtp.value;
       }
 
+      const categoryLabel = categories.find((item) => item.id === category)?.label || category;
       const payload = {
         title: title || categoryLabel,
         category,

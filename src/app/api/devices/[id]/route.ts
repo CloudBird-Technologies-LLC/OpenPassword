@@ -1,11 +1,13 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '../../../../lib/prisma';
+import { getAuthUser } from '../../../../lib/auth';
 
-const prisma = new PrismaClient();
-
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
+    const { id } = await params;
     await prisma.device.delete({
       where: { id }
     });

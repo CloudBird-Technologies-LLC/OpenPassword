@@ -280,6 +280,23 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## Deploy with EasyPanel
+
+Create an App service from GitHub and use these settings:
+
+- Branch: `main`
+- Build path: `/`
+- Dockerfile: `Dockerfile`
+- Container port: `3000`
+- Persistent volume: mount a volume at `/app/data`
+- Environment variable: `DATABASE_URL=file:/app/data/openpassword.db`
+
+The container runs `prisma db push` automatically before starting the
+application. The persistent volume is required because OpenPassword uses
+SQLite; without it, application data is lost when the container is replaced.
+
+---
+
 ## 🛠️ Available Scripts
 
 | Command | Description |
@@ -287,6 +304,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run dev` | Start the development server with Turbopack |
 | `npm run build` | Build the application for production |
 | `npm run start` | Start the production server |
+| `npm run start:production` | Sync the database and start the production server |
 | `npm run lint` | Run the ESLint linter |
 | `npx prisma studio` | Open the visual database browser |
 | `npx prisma db push` | Sync the schema with the database |

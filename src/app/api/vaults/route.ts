@@ -1,19 +1,26 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../lib/prisma';
+import { getAuthUser } from '../../../lib/auth';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
     const url = new URL(request.url);
     const fetchAll = url.searchParams.get('all') === 'true';
 
-    const user = await prisma.user.findFirst();
-    const isTravelMode = user?.travelMode || false;
+    const isTravelMode = user.travelMode || false;
 
     const vaults = await prisma.vault.findMany({
       where: isTravelMode && !fetchAll ? { safeForTravel: true } : undefined,
       include: {
         _count: {
-          select: { items: true }
+          select: { items: true, members: true }
+        },
+        members: {
+          include: { teamMember: true },
+          take: 5
         }
       }
     });
@@ -23,8 +30,11 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
     const body = await request.json();
     const newVault = await prisma.vault.create({
       data: {

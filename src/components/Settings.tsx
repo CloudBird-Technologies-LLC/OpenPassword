@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Edit, Mail, KeyRound, Shield, Plane, Lock, QrCode, 
   Download, Smartphone, Monitor, MoreHorizontal, CheckSquare, 
-  Square, ChevronRight, Globe, Info, Printer, Save, X
+  Square, ChevronRight, Globe, Info, Printer, Save, X, Key, Plus, Trash2, Copy, Eye, EyeOff
 } from 'lucide-react';
 import ApiDocs from './ApiDocsModal';
 import { customAlert } from './GlobalModals';
@@ -26,9 +26,69 @@ export default function Settings() {
   const [smtpForm, setSmtpForm] = useState({ host: '', port: '', user: '', pass: '' });
   
   // New Modals State
-  const [activeView, setActiveView] = useState<'general' | 'api' | 'smtp'>('general');
+  const [activeView, setActiveView] = useState<'general' | 'api' | 'smtp' | 'apikeys'>('general');
   const [language, setLanguage] = useState<'es' | 'en'>('es');
   const t = translations[language];
+
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyScopes, setNewKeyScopes] = useState('read');
+  const [newKeyExpiry, setNewKeyExpiry] = useState('never');
+  const [createdKey, setCreatedKey] = useState<string | null>(null);
+  const [keyNameError, setKeyNameError] = useState('');
+  const [showCreatedKey, setShowCreatedKey] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const fetchApiKeys = async () => {
+    try {
+      const res = await fetch('/api/apikeys');
+      const data = await res.json();
+      if (data.data) setApiKeys(data.data);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleCreateApiKey = async () => {
+    if (!newKeyName.trim()) { setKeyNameError('El nombre es obligatorio.'); return; }
+    setKeyNameError('');
+    const expiresInDays = newKeyExpiry === 'never' ? undefined
+      : newKeyExpiry === '30d' ? 30
+      : newKeyExpiry === '90d' ? 90
+      : newKeyExpiry === '1y' ? 365 : undefined;
+
+    try {
+      const res = await fetch('/api/apikeys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newKeyName.trim(), scopes: newKeyScopes, expiresInDays }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCreatedKey(data.data.key);
+        setShowCreatedKey(true);
+        setCopiedKey(false);
+        setNewKeyName('');
+        fetchApiKeys();
+      } else {
+        customAlert(data.error || 'Error al crear la API key.', true);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleRevokeApiKey = async (id: string) => {
+    try {
+      const res = await fetch(`/api/apikeys/${id}`, { method: 'DELETE' });
+      if (res.ok) setApiKeys(prev => prev.filter(k => k.id !== id));
+    } catch (e) { console.error(e); }
+  };
+
+  const handleCopyKey = () => {
+    if (createdKey) {
+      navigator.clipboard.writeText(createdKey);
+      setCopiedKey(true);
+      setTimeout(() => setCopiedKey(false), 2000);
+    }
+  };
 
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [newEmail, setNewEmail] = useState('');
@@ -188,6 +248,125 @@ export default function Settings() {
       
       {/* Dynamic View Content */}
       {activeView === 'api' && <ApiDocs onBack={() => setActiveView('general')} />}
+
+      {activeView === 'apikeys' && (
+        <div style={{ flex: 1, padding: '40px' }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
+              <button onClick={() => setActiveView('general')} style={{ background: 'var(--bg-tertiary)', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} />
+              </button>
+              <div>
+                <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>API Keys</h1>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>Crea claves para autenticar aplicaciones externas, extensiones o scripts contra la API de OpenPassword.</p>
+              </div>
+            </div>
+
+            {/* Create key form */}
+            <div style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', padding: '24px', border: '1px solid var(--border-color)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Key size={16} /> Nueva API Key</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>Nombre *</label>
+                  <input
+                    value={newKeyName}
+                    onChange={e => { setNewKeyName(e.target.value); setKeyNameError(''); }}
+                    placeholder='Ej: Extensión de Chrome, Script de backup…'
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: `1px solid ${keyNameError ? '#ef4444' : 'var(--border-color)'}`, background: 'var(--bg-tertiary)', color: 'var(--text-primary)', fontSize: '0.9rem', boxSizing: 'border-box' }}
+                  />
+                  {keyNameError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px' }}>{keyNameError}</p>}
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>Permisos</label>
+                  <select value={newKeyScopes} onChange={e => setNewKeyScopes(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                    <option value='read'>Solo lectura</option>
+                    <option value='read,write'>Lectura y escritura</option>
+                    <option value='read,write,delete'>Control total</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>Expiración</label>
+                  <select value={newKeyExpiry} onChange={e => setNewKeyExpiry(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                    <option value='never'>Sin expiración</option>
+                    <option value='30d'>30 días</option>
+                    <option value='90d'>90 días</option>
+                    <option value='1y'>1 año</option>
+                  </select>
+                </div>
+              </div>
+              <button onClick={handleCreateApiKey} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--accent-primary)', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: '600', fontSize: '0.9rem' }}>
+                <Plus size={16} /> Generar API Key
+              </button>
+            </div>
+
+            {/* Reveal created key — shown once */}
+            {showCreatedKey && createdKey && (
+              <div style={{ backgroundColor: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <Shield size={18} color='#10b981' />
+                  <span style={{ fontWeight: '700', color: '#10b981' }}>¡Copia tu clave ahora! No se mostrará de nuevo.</span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <code style={{ flex: 1, padding: '10px 14px', background: 'var(--bg-primary)', borderRadius: '8px', fontSize: '0.85rem', fontFamily: 'monospace', letterSpacing: '0.5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
+                    {showCreatedKey ? createdKey : '•'.repeat(40)}
+                  </code>
+                  <button onClick={() => setShowCreatedKey(v => !v)} title='Mostrar/ocultar' style={{ padding: '10px', background: 'var(--bg-tertiary)', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                    {showCreatedKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                  <button onClick={handleCopyKey} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: copiedKey ? '#10b981' : 'var(--bg-tertiary)', border: 'none', borderRadius: '8px', cursor: 'pointer', color: copiedKey ? '#fff' : 'var(--text-secondary)', fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s' }}>
+                    <Copy size={14} /> {copiedKey ? '¡Copiado!' : 'Copiar'}
+                  </button>
+                  <button onClick={() => { setShowCreatedKey(false); setCreatedKey(null); }} style={{ padding: '10px', background: 'var(--bg-tertiary)', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Existing keys list */}
+            <div style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '0.95rem', fontWeight: '600' }}>Claves activas</h2>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{apiKeys.length} clave{apiKeys.length !== 1 ? 's' : ''}</span>
+              </div>
+              {apiKeys.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                  <Key size={32} style={{ opacity: 0.3, marginBottom: '12px' }} />
+                  <p style={{ fontSize: '0.9rem' }}>No hay claves API creadas todavía.</p>
+                </div>
+              ) : apiKeys.map(k => (
+                <div key={k.id} style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Key size={16} color='var(--accent-primary)' />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: '600', fontSize: '0.9rem', marginBottom: '2px' }}>{k.name}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'monospace' }}>{k.prefix}••••••</span>
+                      <span style={{ background: 'var(--bg-primary)', padding: '1px 8px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>{k.scopes}</span>
+                      {k.expiresAt && <span>Expira: {new Date(k.expiresAt).toLocaleDateString()}</span>}
+                      {k.lastUsedAt && <span>Último uso: {new Date(k.lastUsedAt).toLocaleDateString()}</span>}
+                      {!k.lastUsedAt && <span>Nunca usada</span>}
+                    </div>
+                  </div>
+                  <button onClick={() => handleRevokeApiKey(k.id)} title='Revocar clave' style={{ padding: '8px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#ef4444', borderRadius: '6px', flexShrink: 0 }} onMouseOver={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.1)')} onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Usage instructions */}
+            <div style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', padding: '24px', border: '1px solid var(--border-color)', marginTop: '24px' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}><Info size={16} /> Cómo usar tu API Key</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Incluye tu clave en el header <code style={{ background: 'var(--bg-primary)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>Authorization</code> de cada petición:</p>
+              <pre style={{ background: 'var(--bg-primary)', padding: '14px 16px', borderRadius: '8px', fontSize: '0.82rem', fontFamily: 'monospace', color: 'var(--text-primary)', overflowX: 'auto', border: '1px solid var(--border-color)', lineHeight: '1.6' }}>{`curl https://tu-dominio.com/api/items \\\n  -H "Authorization: Bearer op_tu_clave_aqui"`}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Existing SMTP view trigger */}
       
       {activeView === 'smtp' && (
         <div style={{ flex: 1, padding: '40px' }}>
@@ -281,6 +460,14 @@ export default function Settings() {
                       style={{ width: '100%', padding: '16px', textAlign: 'center', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.9rem' }}
                     >
                       {t.changeLanguage || 'Cambiar idioma'} ({language === 'es' ? 'EN' : 'ES'})
+                    </button>
+                    <button 
+                      onClick={() => { setShowMoreActions(false); setActiveView('apikeys'); fetchApiKeys(); }}
+                      style={{ width: '100%', padding: '16px', textAlign: 'center', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.9rem' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <Key size={16} /> API Keys
+                      </div>
                     </button>
                     <button 
                       onClick={() => { setShowMoreActions(false); setActiveView('api'); }}

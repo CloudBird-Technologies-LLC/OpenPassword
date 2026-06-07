@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '../../../lib/prisma';
+import { getAuthUser } from '../../../lib/auth';
 
-const prisma = new PrismaClient();
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const user = await getAuthUser(req);
+    if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     const { itemId, expiresInDays, viewOnce } = await req.json();
 
     if (!itemId) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Vault } from '../types';
+import { PasswordItem, Vault } from '../types';
 import { Copy, Edit2, Share, CheckCircle2, Fingerprint, Lock, Shield, CreditCard, FileText, FileBadge, KeyRound, MoreVertical, Star, FolderOutput, CopyPlus, History, Archive, Trash2, ChevronDown, Eye, EyeOff, X } from 'lucide-react';
 import OTPDisplay from './OTPDisplay';
 import { customAlert, customConfirm } from './GlobalModals';

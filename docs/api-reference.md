@@ -8,9 +8,22 @@ All endpoints are located under `/api/`. Authentication is required for every en
 
 ## Authentication
 
+OpenPassword supports two authentication methods for its API:
+
+1.  **Session Cookie (`auth_token`):** Used primarily by the web dashboard. The cookie is automatically handled by the browser.
+2.  **API Key (Bearer Token):** Used by third-party integrations, browser extensions, and scripts. Include the key in the `Authorization` header.
+
+```bash
+Authorization: Bearer op_your_api_key_here
+```
+
+API Keys can be generated and managed in the **Settings > API Keys** section of the dashboard.
+
+---
+
 ### `POST /api/auth/login`
 
-Authenticates a user and establishes a session.
+Authenticates a user and establishes a browser session (sets a cookie). This endpoint is primarily for the web UI.
 
 **Request body:**
 ```json
@@ -27,10 +40,35 @@ Authenticates a user and establishes a session.
 }
 ```
 
-**Response `401`:**
+---
+
+### `GET /api/apikeys`
+
+Lists all API keys for the current user. Only metadata is returned; the actual key is never shown after creation.
+
+### `POST /api/apikeys`
+
+Generates a new API Key. **The raw key is returned only once in the response.**
+
+**Request body:**
 ```json
 {
-  "error": "Invalid credentials"
+  "name": "Chrome Extension",
+  "scopes": "read,write",
+  "expiresInDays": 30
+}
+```
+
+**Response `201`:**
+```json
+{
+  "data": {
+    "id": "clxxx...",
+    "name": "Chrome Extension",
+    "prefix": "op_ABC123",
+    "key": "op_ABC123...full_secret_here",
+    "expiresAt": "2026-05-29T00:00:00.000Z"
+  }
 }
 ```
 

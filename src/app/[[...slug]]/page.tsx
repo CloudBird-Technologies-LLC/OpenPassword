@@ -72,6 +72,14 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Listen for vault changes from VaultsAdmin
+  useEffect(() => {
+    const handleVaultsUpdated = () => fetchData();
+    window.addEventListener('vaultsUpdated', handleVaultsUpdated);
+    return () => window.removeEventListener('vaultsUpdated', handleVaultsUpdated);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Update selectedFilter if user navigates back/forward via browser buttons
   useEffect(() => {
     setSelectedFilter(getInitialFilter());
