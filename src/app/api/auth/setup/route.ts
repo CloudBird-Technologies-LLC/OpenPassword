@@ -29,26 +29,26 @@ export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+    const userCount = await prisma.user.count();
+    if (userCount > 0) {
+      return NextResponse.json({ error: 'La instancia ya fue configurada.' }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const secretKey = generateSecretKey();
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        secretKey,
-      }
-    });
-
-    // Automatically create a Personal vault for the user
-    await prisma.vault.create({
-      data: { name: 'Personal', icon: 'FolderLock' }
-    });
+    const [user] = await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          secretKey,
+        }
+      }),
+      prisma.vault.create({
+        data: { name: 'Personal', icon: 'FolderLock' }
+      })
+    ]);
 
     return NextResponse.json({ 
       data: { 

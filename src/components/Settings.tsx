@@ -94,7 +94,7 @@ export default function Settings() {
   const [newEmail, setNewEmail] = useState('');
   
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: 'CloudBird Technologies', avatarUrl: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', avatarUrl: '' });
   
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
@@ -113,7 +113,7 @@ export default function Settings() {
             setSmtpForm({ host: res.data.smtpHost, port: res.data.smtpPort, user: res.data.smtpUser, pass: res.data.smtpPass });
           }
           if (res.data.name || res.data.avatarUrl) {
-            setProfileForm({ name: res.data.name || 'CloudBird Technologies', avatarUrl: res.data.avatarUrl || '' });
+            setProfileForm({ name: res.data.name || '', avatarUrl: res.data.avatarUrl || '' });
           }
           if (res.data.language) {
             setLanguage(res.data.language as 'es' | 'en');
@@ -186,7 +186,7 @@ export default function Settings() {
 
   const handleDownloadEmergencyKit = () => {
     if (!user) return;
-    const content = `OpenPassword Emergency Kit\n\n---------------------------\nNombre: CloudBird Technologies\nEmail: ${user.email}\nSecret Key: ${user.secretKey}\nRecovery Code: ${user.recoveryCode || 'No generado'}\n---------------------------\n\nGuarda este archivo en un lugar seguro. Lo necesitarás para iniciar sesión en dispositivos nuevos o recuperar tu cuenta.`;
+    const content = `OpenPassword Emergency Kit\n\n---------------------------\nNombre: ${user.name || 'Sin nombre'}\nEmail: ${user.email}\nSecret Key: ${user.secretKey}\nRecovery Code: ${user.recoveryCode || 'No generado'}\n---------------------------\n\nGuarda este archivo en un lugar seguro. Lo necesitarás para iniciar sesión en dispositivos nuevos o recuperar tu cuenta.`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

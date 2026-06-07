@@ -3,8 +3,8 @@
 .next
 node_modules
 docs
-dev.db
-prisma/dev.db
+*.db
+*.db-journal
 .env*
 npm-debug.log*
 README.md

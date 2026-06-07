@@ -3,35 +3,16 @@ import prisma from '../../../lib/prisma';
 
 export async function GET() {
   try {
-    let members = await prisma.teamMember.findMany({
+    const members = await prisma.teamMember.findMany({
       include: {
         vaults: {
           include: { vault: true }
         }
       }
     });
-    
-    // Seed if empty
-    if (members.length === 0) {
-      await prisma.$transaction(
-        [
-          { name: 'CloudBird Technologies', email: 'soporte@cloudbird.com.mx', status: 'Activo', initial: 'C', color: '#3b82f6' },
-          { name: 'DemiLexor', email: 'demilexor@gmail.com', status: 'Activo', initial: 'D', color: '#374151' },
-          { name: 'Homolfis', email: 'leandro.palacio@cloudbird.com.mx', status: 'Activo', initial: 'H', color: '#d946ef' },
-          { name: 'The Creative Vault', email: 'thecreativevaultcommunity@gmail.com', status: 'Activo', initial: 'T', color: '#0ea5e9' },
-        ].map((data) => prisma.teamMember.create({ data }))
-      );
-      members = await prisma.teamMember.findMany({
-        include: {
-          vaults: {
-            include: { vault: true }
-          }
-        }
-      });
-    }
-    
+
     return NextResponse.json({ data: members });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch team members' }, { status: 500 });
   }
 }
@@ -48,7 +29,7 @@ export async function POST(request: Request) {
       }
     });
     return NextResponse.json({ data: member });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create member' }, { status: 400 });
   }
 }

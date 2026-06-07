@@ -9,11 +9,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Si ya tiene token e intenta ir a login o setup, redirigir a la app
-  if (authToken && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/setup')) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
   return NextResponse.next();
 }
 

@@ -173,7 +173,9 @@ Authentication uses a **cookie-based session**:
 
 ## Database
 
-OpenPassword uses **Prisma** with a **SQLite** backend by default — ideal for self-hosting with zero infrastructure. Switching to PostgreSQL or MySQL requires only changing the `datasource` block in `prisma/schema.prisma` and the `DATABASE_URL` env variable.
+OpenPassword uses **Prisma** with a **PostgreSQL** backend. The connection is
+configured exclusively through the `DATABASE_URL` environment variable, and
+production applies committed migrations with `prisma migrate deploy`.
 
 The Prisma client is instantiated as a singleton in `src/lib/prisma.ts` to prevent connection exhaustion during hot-reloading in development:
 

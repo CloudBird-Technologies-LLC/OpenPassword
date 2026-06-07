@@ -185,7 +185,7 @@ OpenPassword/
 │   ├── api-reference.md        # Full API reference
 │   ├── features.md             # Feature deep-dives
 │   └── assets/                 # Screenshots
-└── dev.db                      # Local SQLite database (development)
+└── scripts/                    # OpenPassword CLI
 ```
 
 ---
@@ -256,14 +256,14 @@ npm install
 Create a `.env` file at the root of the project:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:password@localhost:5432/openpassword?schema=public"
 ```
 
 ### 4. Initialize the database
 
 ```bash
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
 ```
 
 ### 5. Create your first account
@@ -288,12 +288,43 @@ Create an App service from GitHub and use these settings:
 - Build path: `/`
 - Dockerfile: `Dockerfile`
 - Container port: `3000`
-- Persistent volume: mount a volume at `/app/data`
-- Environment variable: `DATABASE_URL=file:/app/data/openpassword.db`
+- Environment variable:
 
-The container runs `prisma db push` automatically before starting the
-application. The persistent volume is required because OpenPassword uses
-SQLite; without it, application data is lost when the container is replaced.
+```env
+DATABASE_URL="postgresql://postgres:password@postgres-host:5432/openpassword?schema=public&sslmode=disable"
+```
+
+Use the host, port, user, password, and database provided by your PostgreSQL
+service. URL-encode special characters in the password. The container runs
+`prisma migrate deploy` automatically before starting the application.
+
+No application volume is required because all persistent data is stored in
+PostgreSQL.
+
+The repository contains no database file or seed data. A new PostgreSQL
+database starts empty and redirects the login page to `/setup` for the initial
+onboarding.
+
+### OpenPassword CLI
+
+Run commands directly from the EasyPanel application terminal:
+
+```bash
+openpassword -help
+openpassword -status
+openpassword -reset
+```
+
+`reset` permanently deletes every user, vault, item, team member, API key, and
+other application record, then leaves the instance ready for onboarding at
+`/setup`. In a non-interactive terminal, use:
+
+```bash
+openpassword -reset -yes
+```
+
+For local development, run `npm link` once to install the `openpassword`
+command in your local Node.js environment.
 
 ---
 
@@ -304,10 +335,10 @@ SQLite; without it, application data is lost when the container is replaced.
 | `npm run dev` | Start the development server with Turbopack |
 | `npm run build` | Build the application for production |
 | `npm run start` | Start the production server |
-| `npm run start:production` | Sync the database and start the production server |
+| `npm run start:production` | Apply PostgreSQL migrations and start the production server |
 | `npm run lint` | Run the ESLint linter |
 | `npx prisma studio` | Open the visual database browser |
-| `npx prisma db push` | Sync the schema with the database |
+| `npx prisma migrate deploy` | Apply pending database migrations |
 
 ---
 
@@ -318,7 +349,7 @@ SQLite; without it, application data is lost when the container is replaced.
 | **Next.js 16** (App Router + Turbopack) | Full-stack framework |
 | **React 19** | Reactive UI |
 | **TypeScript 5** | Static typing |
-| **Prisma 5** + **SQLite** | ORM and database |
+| **Prisma 5** + **PostgreSQL** | ORM and database |
 | **bcryptjs** | Password hashing |
 | **crypto-js** | AES, SHA, MD5, Base64 encryption |
 | **otpauth** | TOTP code generation |

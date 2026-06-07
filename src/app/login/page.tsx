@@ -12,6 +12,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  React.useEffect(() => {
+    fetch('/api/auth/status')
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.configured === false) router.replace('/setup');
+      })
+      .catch(() => {});
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
