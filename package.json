@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "start:production": "prisma migrate deploy && next start",
+    "start:production": "node scripts/start-production.js",
     "lint": "eslint"
   },
   "dependencies": {
