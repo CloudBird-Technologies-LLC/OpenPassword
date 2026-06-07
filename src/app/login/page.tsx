@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { KeyRound, Lock, Info } from 'lucide-react';
 
@@ -31,7 +32,7 @@ export default function LoginPage() {
       } else {
         setErrorMsg(json.error || 'Credenciales inválidas');
       }
-    } catch (error) {
+    } catch {
       setErrorMsg('Error de conexión');
     } finally {
       setLoading(false);
@@ -110,13 +111,13 @@ export default function LoginPage() {
                 >
                   {loading ? 'Iniciando...' : 'Iniciar sesión'}
                 </button>
-                <a href="#" style={{ color: '#2563eb', fontSize: '0.9rem', textDecoration: 'none' }}>¿Tienes problemas para iniciar sesión?</a>
+                <Link href="/refreshpass" style={{ color: '#2563eb', fontSize: '0.9rem', textDecoration: 'none' }}>¿Tienes problemas para iniciar sesión?</Link>
               </div>
             </form>
           </div>
 
           <div style={{ marginTop: '30px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            <a href="/setup" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 500 }}>Crear una nueva cuenta</a>
+            <Link href="/setup" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 500 }}>Crear una nueva cuenta</Link>
           </div>
 
         </div>
